@@ -1,0 +1,73 @@
+{
+  "benchmark": "StageKV cross-layer calibrated benchmark",
+  "performance_claim_protocol": {
+    "isolated_worker_per_context_length": true,
+    "warmup_rounds_excluded": 1,
+    "measured_repetitions": 1,
+    "decode_tokens": 32,
+    "rotated_execution_order": true,
+    "fixed_seed": 2026,
+    "greedy_behavioral_match_required": true,
+    "cuda_event_timing": true,
+    "per_token_global_device_sync": false,
+    "final_trial_global_device_sync": true,
+    "transfer_event_timing_enabled": true,
+    "paper_ready": false
+  },
+  "validated_result_gates": {
+    "all_trials_present": true,
+    "all_greedy_sequences_match_standard": true,
+    "all_cross_layer_schedules_exact": true,
+    "no_blocking_d2h_tensor_copies": true,
+    "transfer_event_timing_complete": true
+  },
+  "performance_decision": {
+    "comparison": "cross_layer_vs_bidirectional_same_residency",
+    "minimum_speed_ratio": 1.05,
+    "observed_speed_ratio": 0.8469785926506265,
+    "meets_confirmatory_speed_target": false,
+    "protocol_pass_does_not_imply_performance_success": true
+  },
+  "transfer_event_timing": {
+    "enabled": true,
+    "scope": "aggregate_per_trial",
+    "h2d_and_d2h_reported_separately": true,
+    "per_token_transfer_event_timing_available": false,
+    "profiling_results_are_not_formal_performance_results": true
+  },
+  "transfer_event_timing_enabled": true,
+  "model_path": "/model/ModelScope/Qwen/Qwen2.5-7B-Instruct",
+  "model_structure": {
+    "model_type": "qwen2",
+    "num_hidden_layers": 28,
+    "num_attention_heads": 28,
+    "num_key_value_heads": 4,
+    "hidden_size": 3584,
+    "head_dim": 128
+  },
+  "resident_kv_heads": [
+    2
+  ],
+  "gpu_kv_residency_fraction": [
+    0.5
+  ],
+  "gpu": "NVIDIA GeForce RTX 4090",
+  "gpu_total_memory_gib": 23.5184326171875,
+  "torch_version": "2.13.0+cu132",
+  "torch_cuda_version": "13.2",
+  "lengths": [
+    8192
+  ],
+  "methods": [
+    "standard",
+    "stagekv_bidirectional_r2",
+    "stagekv_cross_layer_r2"
+  ],
+  "files": {
+    "warmup": "day12_warmup.csv",
+    "raw": "day12_raw.csv",
+    "per_token": "day12_per_token.csv",
+    "summary": "day12_summary.csv",
+    "comparison": "day12_comparison.csv"
+  }
+}

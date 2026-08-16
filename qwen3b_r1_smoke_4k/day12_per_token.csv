@@ -1,0 +1,10 @@
+﻿method,family,resident_kv_heads_r,sequence_length,trial,generated_token_position,phase,token_id,wall_ms,cuda_ms,h2d_event_ms
+stagekv_bidirectional_r1,bidirectional,1,4096,1,1,prefill_ttft,26362,195.3661208972335,195.3574981689453,0.0
+stagekv_bidirectional_r1,bidirectional,1,4096,1,2,decode_first,82,37.16864390298724,37.1649284362793,0.0
+stagekv_bidirectional_r1,bidirectional,1,4096,1,3,decode_steady,198,36.179016809910536,36.174110412597656,0.0
+stagekv_cross_layer_r1,cross_layer,1,4096,1,1,prefill_ttft,26362,193.3717899955809,193.3465576171875,0.0
+stagekv_cross_layer_r1,cross_layer,1,4096,1,2,decode_first,82,37.25534584373236,37.25107192993164,0.0
+stagekv_cross_layer_r1,cross_layer,1,4096,1,3,decode_steady,198,36.18936659768224,36.18502426147461,0.0
+standard,standard,,4096,1,1,prefill_ttft,26362,190.51214726641774,190.50802612304688,0.0
+standard,standard,,4096,1,2,decode_first,82,25.91414237394929,25.909439086914062,0.0
+standard,standard,,4096,1,3,decode_steady,198,25.77032195404172,25.765823364257812,0.0

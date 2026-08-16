@@ -1,0 +1,5 @@
+﻿model,run_kind,cross_layer_over_bidirectional_speed_ratio,meets_confirmatory_speed_target,bidirectional_h2d_event_total_ms,cross_layer_h2d_event_total_ms,bidirectional_d2h_event_total_ms,cross_layer_d2h_event_total_ms
+qwen7b,formal,1.0044161135258611,False,0.0,0.0,0.0,0.0
+qwen3b,formal,1.0036620365173405,False,0.0,0.0,0.0,0.0
+qwen7b,transfer_profile,0.8469785926506265,False,74139.86266565323,88855.66118502617,2044.113437768072,3912.194500826299
+qwen3b,transfer_profile,1.0117262380432397,False,204.3782722055912,206.91468793153763,77.41529574431479,77.89801614359021

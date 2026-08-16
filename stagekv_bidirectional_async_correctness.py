@@ -69,6 +69,7 @@ class DeferredAsyncResidentCache(StaticPinnedResidentCache):
         kv_heads: int,
         resident_heads: int,
         max_cache_len: int,
+        transfer_event_timing: bool = False,
     ) -> None:
         super().__init__(
             layers=layers,
@@ -78,6 +79,10 @@ class DeferredAsyncResidentCache(StaticPinnedResidentCache):
         )
         self.d2h_stream: torch.cuda.Stream | None = None
         self.d2h_stream_handle: int | None = None
+        self.transfer_event_timing = transfer_event_timing
+        self.d2h_transfer_timing_events: list[
+            tuple[torch.cuda.Event, torch.cuda.Event]
+        ] = []
         self.source_ready_events: list[list[torch.cuda.Event] | None] = [
             None for _ in range(layers)
         ]
@@ -97,6 +102,15 @@ class DeferredAsyncResidentCache(StaticPinnedResidentCache):
         self.h2d_wait_for_cpu_ready_calls = 0
         self.reusable_d2h_event_count = 0
         self.blocking_d2h_tensor_copies = 0
+
+    def d2h_event_total_ms(self) -> float:
+        """Return aggregate D2H stream time after a full device sync."""
+        if not self.transfer_event_timing:
+            return 0.0
+        return sum(
+            float(start.elapsed_time(end))
+            for start, end in self.d2h_transfer_timing_events
+        )
 
     def _ensure_d2h_resources(self, layer_idx: int, device: torch.device) -> None:
         if self.d2h_stream is None:
@@ -192,9 +206,18 @@ class DeferredAsyncResidentCache(StaticPinnedResidentCache):
             self.d2h_stream.wait_event(source_ready_event)
             self.d2h_source_wait_calls += 1
             with torch.cuda.stream(self.d2h_stream):
+                timing_start = timing_end = None
+                if self.transfer_event_timing:
+                    timing_start = torch.cuda.Event(enable_timing=True)
+                    timing_end = torch.cuda.Event(enable_timing=True)
+                    timing_start.record(self.d2h_stream)
                 destination_key.copy_(source_key, non_blocking=True)
                 destination_value.copy_(source_value, non_blocking=True)
+                if timing_end is not None:
+                    timing_end.record(self.d2h_stream)
                 ready_event.record(self.d2h_stream)
+            if timing_start is not None and timing_end is not None:
+                self.d2h_transfer_timing_events.append((timing_start, timing_end))
             source_key.record_stream(self.d2h_stream)
             source_value.record_stream(self.d2h_stream)
             self.latest_cpu_ready_event[layer_idx] = ready_event
@@ -263,6 +286,18 @@ class BidirectionalAsyncPatch(CPUHeadOffloadPatch):
         self.fresh_gpu_kv_group_uses = 0
         self.decode_d2h_to_h2d_roundtrips = 0
         self.reusable_h2d_event_count = 4
+        self.h2d_transfer_timing_events: list[
+            tuple[torch.cuda.Event, torch.cuda.Event]
+        ] = []
+
+    def h2d_event_total_ms(self) -> float:
+        """Return aggregate H2D stream time after a full device sync."""
+        if not self.cache.transfer_event_timing:
+            return 0.0
+        return sum(
+            float(start.elapsed_time(end))
+            for start, end in self.h2d_transfer_timing_events
+        )
 
     @staticmethod
     def _tensor_bytes(tensor: torch.Tensor) -> int:
@@ -360,13 +395,23 @@ class BidirectionalAsyncPatch(CPUHeadOffloadPatch):
             cpu_value_view = cpu_value[
                 :, cpu_offset_start:cpu_offset_end, :historical_length
             ]
+            timing_start = timing_end = None
+            if self.cache.transfer_event_timing:
+                timing_start = torch.cuda.Event(enable_timing=True)
+                timing_end = torch.cuda.Event(enable_timing=True)
+                timing_start.record(self.transfer_stream)
             key_destination[
                 :, destination_offset : destination_offset + cpu_count
             ].copy_(cpu_key_view, non_blocking=True)
             value_destination[
                 :, destination_offset : destination_offset + cpu_count
             ].copy_(cpu_value_view, non_blocking=True)
+            if timing_end is not None:
+                timing_end.record(self.transfer_stream)
             self.ready_events[slot_index].record(self.transfer_stream)
+
+        if timing_start is not None and timing_end is not None:
+            self.h2d_transfer_timing_events.append((timing_start, timing_end))
 
         self.cache.cpu_to_gpu_group_transfers += 1
         self.cache.non_blocking_h2d_calls += 2

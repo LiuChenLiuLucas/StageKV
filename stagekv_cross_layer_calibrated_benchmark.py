@@ -1,4 +1,4 @@
-"""Calibrated r=2 benchmark for Day-10 and cross-layer StageKV.
+"""Calibrated benchmark for bidirectional and cross-layer StageKV.
 
 This is a measurement script, not a new algorithm.  It compares a standard
 GPU DynamicCache against the Day-10 bidirectional path and Day-12 one-layer-
@@ -53,7 +53,7 @@ from stagekv_bidirectional_async_correctness import (
     BidirectionalAsyncPatch,
     DeferredAsyncResidentCache,
 )
-from stagekv_cpu_g2_correctness import dynamic_cache_bytes, validate_structure
+from stagekv_cpu_g2_correctness import dynamic_cache_bytes
 from stagekv_cross_layer_prefetch_correctness import CrossLayerPrefetchPatch
 from stagekv_pinned_residency_correctness import KV_GROUP_SIZE
 
@@ -79,6 +79,57 @@ class MethodSpec:
             return "standard"
         assert self.resident_heads is not None
         return f"stagekv_{self.family}_r{self.resident_heads}"
+
+
+def validate_model_structure(
+    config: Any, resident_heads: list[int]
+) -> dict[str, int | str]:
+    """Validate the Qwen2/GQA invariants used by the attention patches."""
+    structure: dict[str, int | str] = {
+        "model_type": str(getattr(config, "model_type", "")),
+        "num_hidden_layers": int(getattr(config, "num_hidden_layers", 0)),
+        "num_attention_heads": int(getattr(config, "num_attention_heads", 0)),
+        "num_key_value_heads": int(getattr(config, "num_key_value_heads", 0)),
+        "hidden_size": int(getattr(config, "hidden_size", 0)),
+    }
+    if structure["model_type"] != "qwen2":
+        raise RuntimeError(
+            "This benchmark currently supports Qwen2/Qwen2.5 models only; "
+            f"observed model_type={structure['model_type']!r}"
+        )
+    numeric = {key: int(value) for key, value in structure.items() if key != "model_type"}
+    if any(value <= 0 for value in numeric.values()):
+        raise RuntimeError(f"Invalid model structure: {structure}")
+
+    query_heads = numeric["num_attention_heads"]
+    kv_heads = numeric["num_key_value_heads"]
+    hidden_size = numeric["hidden_size"]
+    if hidden_size % query_heads != 0:
+        raise RuntimeError("hidden_size must be divisible by num_attention_heads")
+    if query_heads % kv_heads != 0:
+        raise RuntimeError("num_attention_heads must be divisible by num_key_value_heads")
+    if kv_heads % KV_GROUP_SIZE != 0:
+        raise RuntimeError(
+            f"num_key_value_heads={kv_heads} must be divisible by "
+            f"KV_GROUP_SIZE={KV_GROUP_SIZE}"
+        )
+
+    inferred_head_dim = hidden_size // query_heads
+    head_dim = int(getattr(config, "head_dim", 0) or inferred_head_dim)
+    if head_dim != inferred_head_dim:
+        raise RuntimeError(
+            f"Unsupported head_dim={head_dim}; expected hidden_size/query_heads="
+            f"{inferred_head_dim}"
+        )
+    for resident in resident_heads:
+        if resident <= 0 or resident >= kv_heads:
+            raise RuntimeError(
+                f"resident_heads must keep both GPU and CPU KV heads: "
+                f"observed r={resident}, kv_heads={kv_heads}"
+            )
+
+    structure["head_dim"] = head_dim
+    return structure
 
 def gib(value: int | float) -> float:
     return float(value) / 1024**3
@@ -121,6 +172,7 @@ def new_runtime(
     query_heads: int,
     kv_heads: int,
     max_cache_len: int,
+    transfer_event_timing: bool = False,
 ) -> tuple[
     DynamicCache | DeferredAsyncResidentCache,
     BidirectionalAsyncPatch | CrossLayerPrefetchPatch | None,
@@ -136,6 +188,7 @@ def new_runtime(
         kv_heads=kv_heads,
         resident_heads=spec.resident_heads,
         max_cache_len=max_cache_len,
+        transfer_event_timing=transfer_event_timing,
     )
     patch_type = (
         CrossLayerPrefetchPatch
@@ -204,6 +257,8 @@ def cache_statistics(
             "async_prefetch_groups": 0,
             "async_transfer_event_total_ms": 0.0,
             "h2d_event_timing_available": False,
+            "async_d2h_event_total_ms": 0.0,
+            "d2h_event_timing_available": False,
             "dedicated_transfer_stream_enabled": False,
             "d2h_bytes": 0,
             "async_d2h_append_calls": 0,
@@ -248,8 +303,12 @@ def cache_statistics(
                 else 0
             )
         ),
-        "async_transfer_event_total_ms": 0.0,
-        "h2d_event_timing_available": False,
+        "async_transfer_event_total_ms": (
+            patch.h2d_event_total_ms() if patch is not None else 0.0
+        ),
+        "h2d_event_timing_available": bool(
+            patch is not None and cache.transfer_event_timing
+        ),
         "dedicated_transfer_stream_enabled": (
             (
                 bidirectional_patch is not None
@@ -261,6 +320,8 @@ def cache_statistics(
             )
         ),
         "d2h_bytes": int(getattr(cache, "gpu_to_cpu_bytes", 0)),
+        "async_d2h_event_total_ms": cache.d2h_event_total_ms(),
+        "d2h_event_timing_available": cache.transfer_event_timing,
         "async_d2h_append_calls": int(
             getattr(cache, "async_d2h_append_calls", 0)
         ),
@@ -305,6 +366,7 @@ def run_once(
     kv_heads: int,
     head_dim: int,
     decode_tokens: int,
+    transfer_event_timing: bool = False,
 ) -> dict[str, Any]:
     """Run one complete prompt plus greedy decode with fresh cache state."""
     if decode_tokens < 3:
@@ -318,6 +380,7 @@ def run_once(
         query_heads=query_heads,
         kv_heads=kv_heads,
         max_cache_len=max_cache_len,
+        transfer_event_timing=transfer_event_timing,
     )
     context: Iterator[Any] = patch.install() if patch is not None else nullcontext()
     process = psutil.Process()
@@ -451,6 +514,8 @@ def run_once(
             "async_prefetch_groups": stats["async_prefetch_groups"],
             "async_h2d_event_total_ms": stats["async_transfer_event_total_ms"],
             "h2d_event_timing_available": stats["h2d_event_timing_available"],
+            "async_d2h_event_total_ms": stats["async_d2h_event_total_ms"],
+            "d2h_event_timing_available": stats["d2h_event_timing_available"],
             "async_d2h_append_calls": stats["async_d2h_append_calls"],
             "non_blocking_d2h_tensor_copies": stats[
                 "non_blocking_d2h_tensor_copies"
@@ -540,7 +605,7 @@ def worker(args: argparse.Namespace) -> int:
     torch.backends.cuda.matmul.allow_tf32 = False
 
     config = AutoConfig.from_pretrained(args.model_path, local_files_only=True)
-    validate_structure(config)
+    validate_model_structure(config, args.resident_heads)
     layers = int(config.num_hidden_layers)
     query_heads = int(config.num_attention_heads)
     kv_heads = int(config.num_key_value_heads)
@@ -591,6 +656,7 @@ def worker(args: argparse.Namespace) -> int:
                     kv_heads=kv_heads,
                     head_dim=head_dim,
                     decode_tokens=args.decode_tokens,
+                    transfer_event_timing=args.transfer_event_timing,
                 )
             except RuntimeError as exc:
                 if "out of memory" not in str(exc).lower():
@@ -711,6 +777,7 @@ SUMMARY_METRICS = (
     "h2d_gib",
     "d2h_gib",
     "async_h2d_event_total_ms",
+    "async_d2h_event_total_ms",
     "async_d2h_append_calls",
     "non_blocking_d2h_tensor_copies",
     "blocking_d2h_tensor_copies",
@@ -852,6 +919,12 @@ def comparison_rows(summary: list[dict[str, Any]]) -> list[dict[str, Any]]:
                     "candidate_cpu_kv_gib": candidate["cache_cpu_gib_mean"],
                     "candidate_h2d_gib": candidate["h2d_gib_mean"],
                     "candidate_d2h_gib": candidate["d2h_gib_mean"],
+                    "candidate_h2d_event_total_ms": candidate[
+                        "async_h2d_event_total_ms_mean"
+                    ],
+                    "candidate_d2h_event_total_ms": candidate[
+                        "async_d2h_event_total_ms_mean"
+                    ],
                     "all_generated_sequences_match_standard": candidate[
                         "all_generated_sequences_match_standard"
                     ],
@@ -863,29 +936,40 @@ def comparison_rows(summary: list[dict[str, Any]]) -> list[dict[str, Any]]:
                     ],
                 }
             )
-        bidirectional = next(
-            (
-                row
+        residencies = sorted(
+            {
+                int(row["resident_kv_heads_r"])
                 for row in summary
                 if row["sequence_length"] == length
-                and row["family"] == "bidirectional"
-                and row["resident_kv_heads_r"] == 2
+                and row["family"] in {"bidirectional", "cross_layer"}
                 and row["status"] == "ok"
-            ),
-            None,
+            }
         )
-        cross_layer = next(
-            (
-                row
-                for row in summary
-                if row["sequence_length"] == length
-                and row["family"] == "cross_layer"
-                and row["resident_kv_heads_r"] == 2
-                and row["status"] == "ok"
-            ),
-            None,
-        )
-        if bidirectional is not None and cross_layer is not None:
+        for resident in residencies:
+            bidirectional = next(
+                (
+                    row
+                    for row in summary
+                    if row["sequence_length"] == length
+                    and row["family"] == "bidirectional"
+                    and int(row["resident_kv_heads_r"]) == resident
+                    and row["status"] == "ok"
+                ),
+                None,
+            )
+            cross_layer = next(
+                (
+                    row
+                    for row in summary
+                    if row["sequence_length"] == length
+                    and row["family"] == "cross_layer"
+                    and int(row["resident_kv_heads_r"]) == resident
+                    and row["status"] == "ok"
+                ),
+                None,
+            )
+            if bidirectional is None or cross_layer is None:
+                continue
             steady_speed_ratio = (
                 bidirectional["decode_steady_cuda_mean_ms_mean"]
                 / cross_layer["decode_steady_cuda_mean_ms_mean"]
@@ -897,7 +981,7 @@ def comparison_rows(summary: list[dict[str, Any]]) -> list[dict[str, Any]]:
                     "candidate_method": cross_layer["method"],
                     "candidate_family": cross_layer["family"],
                     "reference_method": bidirectional["method"],
-                    "resident_kv_heads_r": 2,
+                    "resident_kv_heads_r": resident,
                     "prefill_cuda_change_percent": (
                         cross_layer["prefill_cuda_ms_mean"]
                         / bidirectional["prefill_cuda_ms_mean"]
@@ -927,6 +1011,18 @@ def comparison_rows(summary: list[dict[str, Any]]) -> list[dict[str, Any]]:
                     ],
                     "bidirectional_h2d_gib": bidirectional["h2d_gib_mean"],
                     "cross_layer_h2d_gib": cross_layer["h2d_gib_mean"],
+                    "bidirectional_h2d_event_total_ms": bidirectional[
+                        "async_h2d_event_total_ms_mean"
+                    ],
+                    "cross_layer_h2d_event_total_ms": cross_layer[
+                        "async_h2d_event_total_ms_mean"
+                    ],
+                    "bidirectional_d2h_event_total_ms": bidirectional[
+                        "async_d2h_event_total_ms_mean"
+                    ],
+                    "cross_layer_d2h_event_total_ms": cross_layer[
+                        "async_d2h_event_total_ms_mean"
+                    ],
                     "bidirectional_staging_gpu_gib": bidirectional[
                         "staging_gpu_gib_mean"
                     ],
@@ -961,6 +1057,7 @@ def validate_results(
     lengths: list[int],
     repeats: int,
     warmup_repeats: int,
+    transfer_event_timing: bool,
 ) -> None:
     for length in lengths:
         for spec in specs:
@@ -1006,20 +1103,31 @@ def validate_results(
                     raise RuntimeError(
                         f"Blocking D2H reappeared for {spec.method} at {length}"
                     )
-                if spec.resident_heads != 4 and any(
+                if any(
                     int(row["async_d2h_append_calls"]) <= 0
                     for row in measured
                 ):
                     raise RuntimeError(
                         f"Deferred D2H path was not exercised for {spec.method} at {length}"
                     )
-                if spec.resident_heads != 4 and any(
+                if any(
                     int(row["non_blocking_d2h_tensor_copies"]) <= 0
                     or not row["dedicated_d2h_stream_enabled"]
                     for row in measured
                 ):
                     raise RuntimeError(
                         f"Async D2H stream/copy evidence is missing for {spec.method} "
+                        f"at {length}"
+                    )
+                if transfer_event_timing and any(
+                    not bool(row["h2d_event_timing_available"])
+                    or not bool(row["d2h_event_timing_available"])
+                    or float(row["async_h2d_event_total_ms"]) <= 0.0
+                    or float(row["async_d2h_event_total_ms"]) <= 0.0
+                    for row in measured
+                ):
+                    raise RuntimeError(
+                        f"Transfer event timing is incomplete for {spec.method} "
                         f"at {length}"
                     )
             if spec.family == "cross_layer" and any(
@@ -1037,6 +1145,9 @@ def save_results(
     specs: list[MethodSpec],
     args: argparse.Namespace,
 ) -> list[dict[str, Any]]:
+    config = AutoConfig.from_pretrained(args.model_path, local_files_only=True)
+    structure = validate_model_structure(config, args.resident_heads)
+    kv_heads = int(structure["num_key_value_heads"])
     summary = summarize(rows, specs)
     comparison = comparison_rows(summary)
     write_csv(results_dir / "day12_warmup.csv", warmups)
@@ -1054,7 +1165,7 @@ def save_results(
         None,
     )
     manifest = {
-        "benchmark": "StageKV cross-layer r=2 calibrated benchmark",
+        "benchmark": "StageKV cross-layer calibrated benchmark",
         "performance_claim_protocol": {
             "isolated_worker_per_context_length": True,
             "warmup_rounds_excluded": args.warmup_repeats,
@@ -1066,13 +1177,15 @@ def save_results(
             "cuda_event_timing": True,
             "per_token_global_device_sync": False,
             "final_trial_global_device_sync": True,
+            "transfer_event_timing_enabled": args.transfer_event_timing,
             "paper_ready": (
                 not args.smoke
+                and not args.transfer_event_timing
                 and args.warmup_repeats >= 2
                 and args.repeats >= 5
                 and args.decode_tokens >= 32
-                and args.lengths == [4096]
-                and args.resident_heads == [2]
+                and len(args.lengths) == 1
+                and len(args.resident_heads) == 1
                 and args.stagekv_modes == ["bidirectional", "cross_layer"]
             ),
         },
@@ -1081,6 +1194,9 @@ def save_results(
             "all_greedy_sequences_match_standard": True,
             "all_cross_layer_schedules_exact": True,
             "no_blocking_d2h_tensor_copies": True,
+            "transfer_event_timing_complete": (
+                True if args.transfer_event_timing else None
+            ),
         },
         "performance_decision": {
             "comparison": "cross_layer_vs_bidirectional_same_residency",
@@ -1097,7 +1213,20 @@ def save_results(
             ),
             "protocol_pass_does_not_imply_performance_success": True,
         },
+        "transfer_event_timing": {
+            "enabled": args.transfer_event_timing,
+            "scope": "aggregate_per_trial",
+            "h2d_and_d2h_reported_separately": True,
+            "per_token_transfer_event_timing_available": False,
+            "profiling_results_are_not_formal_performance_results": True,
+        },
+        "transfer_event_timing_enabled": args.transfer_event_timing,
         "model_path": args.model_path,
+        "model_structure": structure,
+        "resident_kv_heads": args.resident_heads,
+        "gpu_kv_residency_fraction": [
+            resident / kv_heads for resident in args.resident_heads
+        ],
         "gpu": torch.cuda.get_device_name(0) if torch.cuda.is_available() else "unavailable",
         "gpu_total_memory_gib": (
             gib(torch.cuda.get_device_properties(0).total_memory)
@@ -1129,7 +1258,12 @@ def orchestrate(args: argparse.Namespace) -> int:
     rows: list[dict[str, Any]] = []
     warmups: list[dict[str, Any]] = []
     for length in args.lengths:
-        print(f"\n=== Cross-layer r=2 calibrated sequence_length={length} ===", flush=True)
+        resident_text = ",".join(str(value) for value in args.resident_heads)
+        print(
+            f"\n=== Cross-layer calibrated r={resident_text} "
+            f"sequence_length={length} ===",
+            flush=True,
+        )
         command = [
             sys.executable,
             str(Path(__file__).resolve()),
@@ -1153,6 +1287,8 @@ def orchestrate(args: argparse.Namespace) -> int:
         ]
         if args.smoke:
             command.append("--smoke")
+        if args.transfer_event_timing:
+            command.append("--transfer-event-timing")
         process = subprocess.Popen(
             command,
             stdout=subprocess.PIPE,
@@ -1183,6 +1319,7 @@ def orchestrate(args: argparse.Namespace) -> int:
         lengths=args.lengths,
         repeats=args.repeats,
         warmup_repeats=args.warmup_repeats,
+        transfer_event_timing=args.transfer_event_timing,
     )
     comparison = save_results(results_dir, rows, warmups, specs, args)
     print(f"warmup={results_dir / 'day12_warmup.csv'}")
@@ -1235,6 +1372,14 @@ def parse_args() -> argparse.Namespace:
         action="store_true",
         help="Allow a short non-paper validation run with fewer than five repeats.",
     )
+    parser.add_argument(
+        "--transfer-event-timing",
+        action="store_true",
+        help=(
+            "Profile aggregate H2D and D2H CUDA-event time. This adds event "
+            "overhead and forces paper_ready=false."
+        ),
+    )
     parser.add_argument("--worker", action="store_true")
     return parser.parse_args()
 
@@ -1251,8 +1396,6 @@ def main() -> int:
         raise ValueError("warmup-repeats must be at least 1")
     if any(length < 1 for length in args.lengths):
         raise ValueError("all context lengths must be positive")
-    if args.resident_heads != [2]:
-        raise ValueError("this calibrated experiment intentionally supports only r=2")
     if len(set(args.resident_heads)) != len(args.resident_heads):
         raise ValueError("resident-heads must not contain duplicates")
     if args.stagekv_modes != ["bidirectional", "cross_layer"]:
@@ -1261,6 +1404,8 @@ def main() -> int:
         )
     if len(set(args.lengths)) != len(args.lengths):
         raise ValueError("lengths must not contain duplicates")
+    config = AutoConfig.from_pretrained(args.model_path, local_files_only=True)
+    validate_model_structure(config, args.resident_heads)
     if args.worker:
         if args.sequence_length is None:
             raise ValueError("worker mode requires --sequence-length")

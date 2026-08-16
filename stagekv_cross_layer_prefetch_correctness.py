@@ -158,9 +158,19 @@ class CrossLayerPrefetchPatch(BidirectionalAsyncPatch):
         destination_key = self.staging_key[slot_idx][:, :, :historical_length]
         destination_value = self.staging_value[slot_idx][:, :, :historical_length]
         with torch.cuda.stream(self.transfer_stream):
+            timing_start = timing_end = None
+            if self.cache.transfer_event_timing:
+                timing_start = torch.cuda.Event(enable_timing=True)
+                timing_end = torch.cuda.Event(enable_timing=True)
+                timing_start.record(self.transfer_stream)
             destination_key.copy_(source_key, non_blocking=True)
             destination_value.copy_(source_value, non_blocking=True)
+            if timing_end is not None:
+                timing_end.record(self.transfer_stream)
             self.ready_events[slot_idx].record(self.transfer_stream)
+
+        if timing_start is not None and timing_end is not None:
+            self.h2d_transfer_timing_events.append((timing_start, timing_end))
 
         copied_bytes = self._bytes(destination_key) + self._bytes(destination_value)
         self.cache.cpu_to_gpu_group_transfers += 1

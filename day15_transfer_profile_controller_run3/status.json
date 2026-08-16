@@ -1,0 +1,11 @@
+{
+  "state": "running",
+  "updated_at": "2026-08-16T11:06:25",
+  "tmux_session": "stagekv_transfer_profile_run3",
+  "run_tag": "run3",
+  "results": [
+    "/root/stagekv/day15_transfer_profile_qwen7b_r2_8k_run3",
+    "/root/stagekv/day15_transfer_profile_qwen3b_r1_8k_run3"
+  ],
+  "current_profile": "qwen7b_r2"
+}
