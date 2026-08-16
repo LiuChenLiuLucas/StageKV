@@ -1,0 +1,49 @@
+{
+  "model": "/root/ModelScope/model/Qwen2.5-7B-Instruct",
+  "seed": 2026,
+  "sequence_length": 4096,
+  "max_new_tokens": 4,
+  "standard": {
+    "mode": "standard",
+    "input_tokens": 4096,
+    "generated_tokens": 4,
+    "generated_token_ids": [
+      287,
+      220,
+      16,
+      15
+    ],
+    "elapsed_seconds": 0.4913157650735229,
+    "peak_gpu_allocated_gib": 14.999324321746826,
+    "peak_gpu_reserved_gib": 15.208984375,
+    "cpu_rss_before_gib": 1.4105567932128906,
+    "cpu_rss_after_gib": 1.4420509338378906,
+    "cpu_rss_delta_gib": 0.031494140625,
+    "first_step_argmax": 287
+  },
+  "layer_offload": {
+    "mode": "layer_offload",
+    "input_tokens": 4096,
+    "generated_tokens": 4,
+    "generated_token_ids": [
+      287,
+      220,
+      16,
+      15
+    ],
+    "elapsed_seconds": 0.7820143648423254,
+    "peak_gpu_allocated_gib": 14.796199321746826,
+    "peak_gpu_reserved_gib": 15.103515625,
+    "cpu_rss_before_gib": 1.4440498352050781,
+    "cpu_rss_after_gib": 2.077373504638672,
+    "cpu_rss_delta_gib": 0.6333236694335938,
+    "first_step_argmax": 287
+  },
+  "same_generated_sequence": true,
+  "same_first_token": true,
+  "first_step_logits_allclose": true,
+  "first_step_logits_max_abs_error": NaN,
+  "first_step_logits_mean_abs_error": NaN,
+  "offload_time_overhead_percent": 59.16736657642176,
+  "allocated_gpu_saving_gib": 0.203125
+}

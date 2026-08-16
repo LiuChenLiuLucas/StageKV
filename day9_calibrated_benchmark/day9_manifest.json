@@ -1,0 +1,39 @@
+{
+  "benchmark": "StageKV Day-9 calibrated benchmark",
+  "performance_claim_protocol": {
+    "isolated_worker_per_context_length": true,
+    "warmup_rounds_excluded": 2,
+    "measured_repetitions": 5,
+    "decode_tokens": 32,
+    "rotated_execution_order": true,
+    "fixed_seed": 2026,
+    "greedy_behavioral_match_required": true,
+    "cuda_event_timing": true
+  },
+  "model_path": "/model/ModelScope/Qwen/Qwen2.5-7B-Instruct",
+  "gpu": "NVIDIA GeForce RTX 4090",
+  "gpu_total_memory_gib": 23.5184326171875,
+  "torch_version": "2.13.0+cu132",
+  "torch_cuda_version": "13.2",
+  "lengths": [
+    4096
+  ],
+  "methods": [
+    "standard",
+    "stagekv_sync_r0",
+    "stagekv_sync_r1",
+    "stagekv_sync_r2",
+    "stagekv_sync_r4",
+    "stagekv_async_r0",
+    "stagekv_async_r1",
+    "stagekv_async_r2",
+    "stagekv_async_r4"
+  ],
+  "files": {
+    "warmup": "day9_warmup.csv",
+    "raw": "day9_raw.csv",
+    "per_token": "day9_per_token.csv",
+    "summary": "day9_summary.csv",
+    "comparison": "day9_comparison.csv"
+  }
+}

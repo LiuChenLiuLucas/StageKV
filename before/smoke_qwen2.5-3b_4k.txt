@@ -1,0 +1,16 @@
+loading model...
+Loading checkpoint shards: 100%|█████████████████| 2/2 [00:10<00:00,  5.40s/it]
+sequence_length=4096
+layers=36
+query_heads=16
+kv_heads=2
+head_dim=128
+prefill_seconds=2.9252
+prefill_tokens_per_second=1400.24
+peak_gpu_allocated_gib=6.3190
+peak_gpu_reserved_gib=6.4102
+measured_kv_gib=0.140625
+theoretical_kv_gib=0.140625
+kv_ratio=1.000000
+process_cpu_gib=1.2139
+smoke_test=PASS

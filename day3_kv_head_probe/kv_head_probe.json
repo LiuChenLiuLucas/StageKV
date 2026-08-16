@@ -1,0 +1,54 @@
+{
+  "status": "PASS",
+  "model_path": "/model/ModelScope/Qwen/Qwen2.5-7B-Instruct",
+  "model_type": "qwen2",
+  "sequence_length": 4096,
+  "layers": 28,
+  "query_heads": 28,
+  "kv_heads": 4,
+  "query_heads_per_kv_head": 7,
+  "hidden_size": 3584,
+  "head_dim": 128,
+  "dtype": "torch.bfloat16",
+  "bytes_per_element": 2,
+  "projection_metadata": {
+    "q_proj_in_features": 3584,
+    "q_proj_out_features": 3584,
+    "k_proj_in_features": 3584,
+    "k_proj_out_features": 512,
+    "v_proj_in_features": 3584,
+    "v_proj_out_features": 512
+  },
+  "projection_output_shapes": {
+    "q_proj": [
+      1,
+      4096,
+      3584
+    ],
+    "k_proj": [
+      1,
+      4096,
+      512
+    ],
+    "v_proj": [
+      1,
+      4096,
+      512
+    ]
+  },
+  "cache_shape_per_layer": [
+    1,
+    4,
+    4096,
+    128
+  ],
+  "measured_cache_gib": 0.21875,
+  "theoretical_cache_gib": 0.21875,
+  "cache_ratio": 1.0,
+  "one_kv_head_one_layer_mib": 2.0,
+  "one_kv_head_all_layers_gib": 0.0546875,
+  "peak_gpu_allocated_gib": 14.999261379241943,
+  "torch_version": "2.13.0+cu132",
+  "torch_cuda_version": "13.2",
+  "transformers_version": "4.46.3"
+}

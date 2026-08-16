@@ -1,0 +1,49 @@
+{
+  "benchmark": "StageKV cross-layer r=2 calibrated benchmark",
+  "performance_claim_protocol": {
+    "isolated_worker_per_context_length": true,
+    "warmup_rounds_excluded": 2,
+    "measured_repetitions": 5,
+    "decode_tokens": 32,
+    "rotated_execution_order": true,
+    "fixed_seed": 2026,
+    "greedy_behavioral_match_required": true,
+    "cuda_event_timing": true,
+    "per_token_global_device_sync": false,
+    "final_trial_global_device_sync": true,
+    "paper_ready": true
+  },
+  "validated_result_gates": {
+    "all_trials_present": true,
+    "all_greedy_sequences_match_standard": true,
+    "all_cross_layer_schedules_exact": true,
+    "no_blocking_d2h_tensor_copies": true
+  },
+  "performance_decision": {
+    "comparison": "cross_layer_vs_bidirectional_same_residency",
+    "minimum_speed_ratio": 1.05,
+    "observed_speed_ratio": 1.0121737265250002,
+    "meets_confirmatory_speed_target": false,
+    "protocol_pass_does_not_imply_performance_success": true
+  },
+  "model_path": "/model/ModelScope/Qwen/Qwen2.5-7B-Instruct",
+  "gpu": "NVIDIA GeForce RTX 4090",
+  "gpu_total_memory_gib": 23.5184326171875,
+  "torch_version": "2.13.0+cu132",
+  "torch_cuda_version": "13.2",
+  "lengths": [
+    4096
+  ],
+  "methods": [
+    "standard",
+    "stagekv_bidirectional_r2",
+    "stagekv_cross_layer_r2"
+  ],
+  "files": {
+    "warmup": "day12_warmup.csv",
+    "raw": "day12_raw.csv",
+    "per_token": "day12_per_token.csv",
+    "summary": "day12_summary.csv",
+    "comparison": "day12_comparison.csv"
+  }
+}

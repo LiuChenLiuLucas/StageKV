@@ -1,0 +1,300 @@
+{
+  "status": "PASS_BEHAVIORAL_EQUIVALENCE",
+  "method": "stagekv_grouped_attention_prototype",
+  "cache_policy": "standard_gpu_dynamic_cache",
+  "target_resident_kv_heads_r": 0,
+  "implemented_resident_policy": "not_implemented_in_this_prototype",
+  "observed_gpu_cached_kv_heads": 4,
+  "kv_group_size_g": 2,
+  "sequence_length": 4096,
+  "decode_tokens": 8,
+  "layers": 28,
+  "query_heads": 28,
+  "kv_heads": 4,
+  "query_heads_per_kv_head": 7,
+  "query_heads_per_group": 14,
+  "groups_per_layer": 2,
+  "expected_attention_calls": 224,
+  "observed_attention_calls": 224,
+  "expected_group_calls": 448,
+  "observed_group_calls": 448,
+  "passthrough_sdpa_calls": 0,
+  "sample_call_shapes": [
+    {
+      "query": [
+        1,
+        28,
+        4096,
+        128
+      ],
+      "key": [
+        1,
+        28,
+        4096,
+        128
+      ],
+      "value": [
+        1,
+        28,
+        4096,
+        128
+      ],
+      "mask": null,
+      "is_causal": true
+    },
+    {
+      "query": [
+        1,
+        28,
+        4096,
+        128
+      ],
+      "key": [
+        1,
+        28,
+        4096,
+        128
+      ],
+      "value": [
+        1,
+        28,
+        4096,
+        128
+      ],
+      "mask": null,
+      "is_causal": true
+    },
+    {
+      "query": [
+        1,
+        28,
+        4096,
+        128
+      ],
+      "key": [
+        1,
+        28,
+        4096,
+        128
+      ],
+      "value": [
+        1,
+        28,
+        4096,
+        128
+      ],
+      "mask": null,
+      "is_causal": true
+    },
+    {
+      "query": [
+        1,
+        28,
+        4096,
+        128
+      ],
+      "key": [
+        1,
+        28,
+        4096,
+        128
+      ],
+      "value": [
+        1,
+        28,
+        4096,
+        128
+      ],
+      "mask": null,
+      "is_causal": true
+    }
+  ],
+  "local_operator_checks": [
+    {
+      "shape_equal": true,
+      "standard_shape": [
+        1,
+        28,
+        4096,
+        128
+      ],
+      "grouped_shape": [
+        1,
+        28,
+        4096,
+        128
+      ],
+      "nonfinite_pattern_equal": true,
+      "finite_allclose": true,
+      "max_abs_error": 0.0,
+      "mean_abs_error": 0.0,
+      "relative_l2_error": 0.0,
+      "cosine_similarity": 1.0,
+      "reference_max_abs": 3.328125,
+      "query_length": 4096,
+      "key_value_length": 4096,
+      "phase": "prefill"
+    },
+    {
+      "shape_equal": true,
+      "standard_shape": [
+        1,
+        28,
+        1,
+        128
+      ],
+      "grouped_shape": [
+        1,
+        28,
+        1,
+        128
+      ],
+      "nonfinite_pattern_equal": true,
+      "finite_allclose": false,
+      "max_abs_error": 0.00048828125,
+      "mean_abs_error": 4.144668309891131e-06,
+      "relative_l2_error": 0.00017156357353087515,
+      "cosine_similarity": 1.0,
+      "reference_max_abs": 2.171875,
+      "query_length": 1,
+      "key_value_length": 4097,
+      "phase": "decode"
+    }
+  ],
+  "local_operator_numerically_equivalent": true,
+  "same_generated_sequence": true,
+  "standard_generated_ids": [
+    287,
+    220,
+    16,
+    15,
+    15,
+    4,
+    220,
+    16
+  ],
+  "grouped_generated_ids": [
+    287,
+    220,
+    16,
+    15,
+    15,
+    4,
+    220,
+    16
+  ],
+  "strict_bf16_all_step_logits_allclose": false,
+  "max_step_logits_abs_error": 0.125,
+  "mean_step_logits_abs_error": 0.014407085604034364,
+  "max_step_logits_relative_l2_error": 0.01421318482607603,
+  "min_step_logits_cosine_similarity": 0.9998898506164551,
+  "all_step_top1_equal": true,
+  "max_probability_total_variation": 0.009983308613300323,
+  "max_probability_abs_error": 0.002911824733018875,
+  "max_symmetric_kl": 0.00032778020249679685,
+  "min_top10_overlap": 0.9,
+  "minimum_standard_top1_margin": 0.0625,
+  "per_step_distribution_checks": [
+    {
+      "top1_equal": true,
+      "standard_top1": 287,
+      "grouped_top1": 287,
+      "standard_top1_margin": 0.0625,
+      "top10_overlap": 1.0,
+      "total_variation": 0.0,
+      "symmetric_kl": 0.0,
+      "max_probability_abs_error": 0.0
+    },
+    {
+      "top1_equal": true,
+      "standard_top1": 220,
+      "grouped_top1": 220,
+      "standard_top1_margin": 0.3125,
+      "top10_overlap": 1.0,
+      "total_variation": 0.005571005400270224,
+      "symmetric_kl": 9.165485971607268e-05,
+      "max_probability_abs_error": 0.00013907719403505325
+    },
+    {
+      "top1_equal": true,
+      "standard_top1": 16,
+      "grouped_top1": 16,
+      "standard_top1_margin": 0.375,
+      "top10_overlap": 0.9,
+      "total_variation": 0.009983308613300323,
+      "symmetric_kl": 0.00032778020249679685,
+      "max_probability_abs_error": 0.000720607116818428
+    },
+    {
+      "top1_equal": true,
+      "standard_top1": 15,
+      "grouped_top1": 15,
+      "standard_top1_margin": 0.1875,
+      "top10_overlap": 1.0,
+      "total_variation": 0.00891987606883049,
+      "symmetric_kl": 0.00021615579316858202,
+      "max_probability_abs_error": 0.0018473528325557709
+    },
+    {
+      "top1_equal": true,
+      "standard_top1": 15,
+      "grouped_top1": 15,
+      "standard_top1_margin": 1.1875,
+      "top10_overlap": 1.0,
+      "total_variation": 0.009409802034497261,
+      "symmetric_kl": 0.00030076823895797133,
+      "max_probability_abs_error": 0.002911824733018875
+    },
+    {
+      "top1_equal": true,
+      "standard_top1": 4,
+      "grouped_top1": 4,
+      "standard_top1_margin": 0.5625,
+      "top10_overlap": 1.0,
+      "total_variation": 0.007354529108852148,
+      "symmetric_kl": 0.00019741585128940642,
+      "max_probability_abs_error": 0.0011793356388807297
+    },
+    {
+      "top1_equal": true,
+      "standard_top1": 220,
+      "grouped_top1": 220,
+      "standard_top1_margin": 0.65625,
+      "top10_overlap": 0.9,
+      "total_variation": 0.007551109883934259,
+      "symmetric_kl": 0.00017868778377305716,
+      "max_probability_abs_error": 0.00016777403652668
+    },
+    {
+      "top1_equal": true,
+      "standard_top1": 16,
+      "grouped_top1": 16,
+      "standard_top1_margin": 0.5625,
+      "top10_overlap": 1.0,
+      "total_variation": 0.007963668555021286,
+      "symmetric_kl": 0.00030227864044718444,
+      "max_probability_abs_error": 0.0007894420996308327
+    }
+  ],
+  "strict_bf16_final_hidden_allclose": false,
+  "final_hidden_max_abs_error": 0.75,
+  "final_hidden_relative_l2_error": 0.009140011854469776,
+  "final_hidden_cosine_similarity": 0.9999602437019348,
+  "end_to_end_numerically_equivalent": false,
+  "behavioral_equivalence": true,
+  "thresholds": {
+    "strict_rtol": 0.0001,
+    "strict_atol": 0.0001,
+    "max_relative_l2": 0.005,
+    "min_cosine_similarity": 0.9999,
+    "max_total_variation": 0.01,
+    "min_top10_overlap": 0.9
+  },
+  "standard_cache_bytes": 235282432,
+  "grouped_cache_bytes": 235282432,
+  "theoretical_cache_bytes": 235282432,
+  "cache_ratio": 1.0,
+  "standard_elapsed_seconds": 1.2184497150592506,
+  "grouped_elapsed_seconds": 0.669207212049514,
+  "note": "The grouped computation is mathematically equivalent, but changing CUDA SDPA shapes can change BF16 reduction order, so bitwise or strict 1e-4 equality is reported separately and is not required for behavioral equivalence. Behavioral equivalence requires identical greedy decisions, close probability distributions, local operator agreement, equal cache bytes, and correct group-call counts. CPU offload, resident heads, asynchronous transfer, and performance claims are not enabled."
+}

@@ -1,0 +1,10 @@
+{
+  "timestamp_utc": "2026-08-12T06:09:50.451092+00:00",
+  "python": "3.12.11 | packaged by Anaconda, Inc. | (main, Jun  5 2025, 13:09:17) [GCC 11.2.0]",
+  "python_executable": "/usr/local/miniconda3/envs/py312/bin/python",
+  "platform": "Linux-6.8.0-134-generic-x86_64-with-glibc2.35",
+  "torch": "2.13.0+cu132",
+  "torch_cuda": "13.2",
+  "transformers": "4.46.3",
+  "gpu": "NVIDIA GeForce RTX 4090"
+}
