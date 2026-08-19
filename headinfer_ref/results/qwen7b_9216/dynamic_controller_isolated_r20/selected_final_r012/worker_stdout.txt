@@ -1,0 +1,18 @@
+method=resident model=/model/ModelScope/Qwen/Qwen2.5-7B-Instruct layers=28 query_heads=28 kv_heads=4 head_dim=128 total_head_blocks=112 resident_head_blocks=12
+[OK] HeadInfer Patched Successfully.
+warmup=1/2
+warmup=2/2
+trial=1/5
+trial=2/5
+trial=3/5
+trial=4/5
+trial=5/5
+{
+  "decode_end_to_end_ms_per_token_mean": 306.7941431376722,
+  "cache_gpu_gib_mean": 0.05732107162475586,
+  "total_transfer_gib_mean": 27.726961612701416,
+  "generated_sequence_stable_across_trials": true
+}
+raw=/root/headinfer_ref/results/qwen7b_9216/dynamic_controller_isolated_r20/selected_final_r012/headinfer_reference_resident_9216_raw.csv
+report=/root/headinfer_ref/results/qwen7b_9216/dynamic_controller_isolated_r20/selected_final_r012/headinfer_reference_resident_9216_report.json
+resident_benchmark=PASS

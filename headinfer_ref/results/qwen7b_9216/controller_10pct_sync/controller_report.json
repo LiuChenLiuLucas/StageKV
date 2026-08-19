@@ -1,0 +1,217 @@
+{
+  "status": "NO_FEASIBLE_CONFIGURATION",
+  "gpu_kv_budget_gib": 0.08,
+  "target_transfer_gib": 27.945311737060546,
+  "sweep": [
+    {
+      "resident_head_blocks": 0,
+      "correct": false,
+      "gpu_kv_gib": 0.008818626403808594,
+      "total_transfer_gib": 31.05034637451172,
+      "decode_ms_per_token": 198.9161645522922,
+      "transfer_target_pass": false,
+      "gpu_budget_pass": true,
+      "feasible": false
+    },
+    {
+      "resident_head_blocks": 1,
+      "correct": false,
+      "gpu_kv_gib": 0.008818626403808594,
+      "total_transfer_gib": 30.77741241455078,
+      "decode_ms_per_token": 212.83151453200688,
+      "transfer_target_pass": false,
+      "gpu_budget_pass": true,
+      "feasible": false
+    },
+    {
+      "resident_head_blocks": 2,
+      "correct": false,
+      "gpu_kv_gib": 0.01322793960571289,
+      "total_transfer_gib": 30.500098705291748,
+      "decode_ms_per_token": 210.85775733214393,
+      "transfer_target_pass": false,
+      "gpu_budget_pass": true,
+      "feasible": false
+    },
+    {
+      "resident_head_blocks": 3,
+      "correct": false,
+      "gpu_kv_gib": 0.017637252807617188,
+      "total_transfer_gib": 30.222784996032715,
+      "decode_ms_per_token": 210.7641887550633,
+      "transfer_target_pass": false,
+      "gpu_budget_pass": true,
+      "feasible": false
+    },
+    {
+      "resident_head_blocks": 4,
+      "correct": false,
+      "gpu_kv_gib": 0.022046566009521484,
+      "total_transfer_gib": 29.94547128677368,
+      "decode_ms_per_token": 208.47371415866,
+      "transfer_target_pass": false,
+      "gpu_budget_pass": true,
+      "feasible": false
+    },
+    {
+      "resident_head_blocks": 5,
+      "correct": false,
+      "gpu_kv_gib": 0.02645587921142578,
+      "total_transfer_gib": 29.66815757751465,
+      "decode_ms_per_token": 201.91287452615396,
+      "transfer_target_pass": false,
+      "gpu_budget_pass": true,
+      "feasible": false
+    },
+    {
+      "resident_head_blocks": 6,
+      "correct": false,
+      "gpu_kv_gib": 0.030865192413330078,
+      "total_transfer_gib": 29.390843868255615,
+      "decode_ms_per_token": 202.16057014461327,
+      "transfer_target_pass": false,
+      "gpu_budget_pass": true,
+      "feasible": false
+    },
+    {
+      "resident_head_blocks": 7,
+      "correct": false,
+      "gpu_kv_gib": 0.035274505615234375,
+      "total_transfer_gib": 29.113530158996582,
+      "decode_ms_per_token": 205.5182642884232,
+      "transfer_target_pass": false,
+      "gpu_budget_pass": true,
+      "feasible": false
+    },
+    {
+      "resident_head_blocks": 8,
+      "correct": false,
+      "gpu_kv_gib": 0.03968381881713867,
+      "total_transfer_gib": 28.83621644973755,
+      "decode_ms_per_token": 199.1514689038678,
+      "transfer_target_pass": false,
+      "gpu_budget_pass": true,
+      "feasible": false
+    },
+    {
+      "resident_head_blocks": 9,
+      "correct": false,
+      "gpu_kv_gib": 0.04409313201904297,
+      "total_transfer_gib": 28.558902740478516,
+      "decode_ms_per_token": 201.5296263690357,
+      "transfer_target_pass": false,
+      "gpu_budget_pass": true,
+      "feasible": false
+    },
+    {
+      "resident_head_blocks": 10,
+      "correct": false,
+      "gpu_kv_gib": 0.048502445220947266,
+      "total_transfer_gib": 28.281589031219482,
+      "decode_ms_per_token": 197.91193647931019,
+      "transfer_target_pass": false,
+      "gpu_budget_pass": true,
+      "feasible": false
+    },
+    {
+      "resident_head_blocks": 11,
+      "correct": false,
+      "gpu_kv_gib": 0.05291175842285156,
+      "total_transfer_gib": 28.00427532196045,
+      "decode_ms_per_token": 196.4412423762022,
+      "transfer_target_pass": false,
+      "gpu_budget_pass": true,
+      "feasible": false
+    },
+    {
+      "resident_head_blocks": 12,
+      "correct": false,
+      "gpu_kv_gib": 0.05732107162475586,
+      "total_transfer_gib": 27.726961612701416,
+      "decode_ms_per_token": 194.21901789203446,
+      "transfer_target_pass": true,
+      "gpu_budget_pass": true,
+      "feasible": false
+    },
+    {
+      "resident_head_blocks": 13,
+      "correct": false,
+      "gpu_kv_gib": 0.061730384826660156,
+      "total_transfer_gib": 27.449647903442383,
+      "decode_ms_per_token": 201.2024077246346,
+      "transfer_target_pass": true,
+      "gpu_budget_pass": true,
+      "feasible": false
+    },
+    {
+      "resident_head_blocks": 14,
+      "correct": false,
+      "gpu_kv_gib": 0.06613969802856445,
+      "total_transfer_gib": 27.17233419418335,
+      "decode_ms_per_token": 199.30292407591497,
+      "transfer_target_pass": true,
+      "gpu_budget_pass": true,
+      "feasible": false
+    },
+    {
+      "resident_head_blocks": 15,
+      "correct": false,
+      "gpu_kv_gib": 0.07054901123046875,
+      "total_transfer_gib": 26.895020484924316,
+      "decode_ms_per_token": 191.6613345414961,
+      "transfer_target_pass": true,
+      "gpu_budget_pass": true,
+      "feasible": false
+    },
+    {
+      "resident_head_blocks": 16,
+      "correct": false,
+      "gpu_kv_gib": 0.07495832443237305,
+      "total_transfer_gib": 26.617706775665283,
+      "decode_ms_per_token": 191.80791990791437,
+      "transfer_target_pass": true,
+      "gpu_budget_pass": true,
+      "feasible": false
+    },
+    {
+      "resident_head_blocks": 17,
+      "correct": false,
+      "gpu_kv_gib": 0.07936763763427734,
+      "total_transfer_gib": 26.34039306640625,
+      "decode_ms_per_token": 191.05759577985893,
+      "transfer_target_pass": true,
+      "gpu_budget_pass": true,
+      "feasible": false
+    },
+    {
+      "resident_head_blocks": 18,
+      "correct": false,
+      "gpu_kv_gib": 0.08377695083618164,
+      "total_transfer_gib": 26.063079357147217,
+      "decode_ms_per_token": 189.65969336850029,
+      "transfer_target_pass": true,
+      "gpu_budget_pass": false,
+      "feasible": false
+    },
+    {
+      "resident_head_blocks": 19,
+      "correct": false,
+      "gpu_kv_gib": 0.08818626403808594,
+      "total_transfer_gib": 25.785765647888184,
+      "decode_ms_per_token": 199.7219360763988,
+      "transfer_target_pass": true,
+      "gpu_budget_pass": false,
+      "feasible": false
+    },
+    {
+      "resident_head_blocks": 20,
+      "correct": false,
+      "gpu_kv_gib": 0.09259557723999023,
+      "total_transfer_gib": 25.50845193862915,
+      "decode_ms_per_token": 193.95878228048483,
+      "transfer_target_pass": true,
+      "gpu_budget_pass": false,
+      "feasible": false
+    }
+  ]
+}

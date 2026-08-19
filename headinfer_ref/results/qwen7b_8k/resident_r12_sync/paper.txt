@@ -1,0 +1,25 @@
+budgeted_headinfer_benchmark.py
+
+以及本次运行配置：
+resident_head_blocks=12
+sequence_length=8192
+decode_tokens=32
+warmup_repeats=2
+repeats=5
+seed=2026
+CUDA_LAUNCH_BLOCKING=1
+
+下一步实验
+现在进入第二个硬指标：在不增加 HeadInfer 8K 基准总传输量的情况下，支持更长上下文。
+运行：
+--model-path /model/ModelScope/Qwen/Qwen2.5-7B-Instruct --method resident --resident-head-blocks 14 --sequence-length 9216 --decode-tokens 32 --warmup-repeats 2 --repeats 5 --seed 2026 --results-dir /root/headinfer_ref/results/qwen7b_9216/resident_r14_sync
+仍然保留：
+CUDA_LAUNCH_BLOCKING=1
+验收标准：
+generated_sequence_stable_across_trials = true
+total_transfer_gib_mean <= 27.60601
+cache_gpu_gib_mean <= 0.080
+如果通过，就可以形成第二条结果：
+传输量不超过原 HeadInfer 8K 基准，
+上下文长度从 8192 增加到 9216，
+提升 12.5%。

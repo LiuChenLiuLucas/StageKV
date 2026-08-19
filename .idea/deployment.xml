@@ -1,11 +1,60 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
-  <component name="PublishConfigData" autoUpload="Always" serverName="root@cpod-1u4hmyv7y6ce-w3.podtcp.compshare.cn:26568 password" remoteFilesAllowedToDisappearOnAutoupload="false">
+  <component name="PublishConfigData" autoUpload="Always" serverName="root@cpod-1u8gguzmnf33-w3.podtcp.compshare.cn:29044 password (3)" remoteFilesAllowedToDisappearOnAutoupload="false">
     <serverData>
-      <paths name="root@cpod-1u4hmyv7y6ce-w3.podtcp.compshare.cn:26568 password">
+      <paths name="root@cpod-1tye26ummvmm-w3.podtcp.compshare.cn:26748 password">
         <serverdata>
           <mappings>
-            <mapping deploy="/tmp/pycharm_project_c2d4bce9" local="$PROJECT_DIR$" />
+            <mapping local="$PROJECT_DIR$" web="/" />
+          </mappings>
+        </serverdata>
+      </paths>
+      <paths name="root@cpod-1tye26ummvmm-w3.podtcp.compshare.cn:26748 password (2)">
+        <serverdata>
+          <mappings>
+            <mapping local="$PROJECT_DIR$" web="/" />
+          </mappings>
+        </serverdata>
+      </paths>
+      <paths name="root@cpod-1u01ioo5v0e1-w3.podtcp.compshare.cn:29513 password">
+        <serverdata>
+          <mappings>
+            <mapping local="$PROJECT_DIR$" web="/" />
+          </mappings>
+        </serverdata>
+      </paths>
+      <paths name="root@cpod-1u16zgdkatgm-w3.podtcp.compshare.cn:27590 password">
+        <serverdata>
+          <mappings>
+            <mapping local="$PROJECT_DIR$" web="/" />
+          </mappings>
+        </serverdata>
+      </paths>
+      <paths name="root@cpod-1u70e7iqd76m-w3.podtcp.compshare.cn:25803 password">
+        <serverdata>
+          <mappings>
+            <mapping deploy="/tmp/pycharm_project_458" local="$PROJECT_DIR$" />
+          </mappings>
+        </serverdata>
+      </paths>
+      <paths name="root@cpod-1u8gguzmnf33-w3.podtcp.compshare.cn:29044 password">
+        <serverdata>
+          <mappings>
+            <mapping deploy="/tmp/pycharm_project_684" local="$PROJECT_DIR$" />
+          </mappings>
+        </serverdata>
+      </paths>
+      <paths name="root@cpod-1u8gguzmnf33-w3.podtcp.compshare.cn:29044 password (2)">
+        <serverdata>
+          <mappings>
+            <mapping deploy="/tmp/pycharm_project_458" local="$PROJECT_DIR$" />
+          </mappings>
+        </serverdata>
+      </paths>
+      <paths name="root@cpod-1u8gguzmnf33-w3.podtcp.compshare.cn:29044 password (3)">
+        <serverdata>
+          <mappings>
+            <mapping deploy="/tmp/pycharm_project_458" local="$PROJECT_DIR$" />
           </mappings>
         </serverdata>
       </paths>

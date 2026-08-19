@@ -1,0 +1,127 @@
+**直接结论**
+
+严格来说，当前结果不是对 HeadInfer 的“全面超越”，而是一个有条件的改进：
+
+> 使用更多 GPU 显存，换取更少的 CPU-GPU KV 传输。
+
+它是一个有效的时间-空间权衡点，但还不能写成“StageKV 同时比 HeadInfer 更省显存、更快”。
+
+**8K 真实代价**
+
+| 方法 | GPU KV Cache | 相对 Standard 节省 | 总传输量 |
+|---|---:|---:|---:|
+| Standard | 0.43916 GiB | 0% | 0 |
+| HeadInfer | 0.00784 GiB | 98.21% | 27.60601 GiB |
+| Resident r=12 | 0.05097 GiB | 88.39% | 24.65128 GiB |
+
+我们的结果是：
+
+```text
+传输量降低：10.70%
+额外 GPU KV：0.04313 GiB，约 44 MiB
+显存节省率：从 98.21% 降到 88.39%
+```
+
+因此，降低 10.70% 传输量不是免费的。它牺牲了一部分 HeadInfer 的极致显存节省能力。
+
+当前同步延迟：
+
+```text
+HeadInfer：约 125.63 ms/token
+Resident：约 125.23 ms/token
+```
+
+差异只有约 `0.3%`，处于实验波动范围内，所以目前不能声称速度提高。
+
+**9216 结果的显存情况**
+
+9216 时完整 KV Cache 理论值约为：
+
+```text
+0.49384 GiB
+```
+
+Resident r=14 使用：
+
+```text
+0.06614 GiB
+```
+
+仍然比 Standard 节省约：
+
+```text
+86.61%
+```
+
+但原始 HeadInfer 预计只需要约：
+
+```text
+0.00882 GiB
+```
+
+所以 Resident 使用的 GPU KV 大约是 HeadInfer 的 7.5 倍。
+
+**为什么在当前实验中仍然有价值**
+
+在 RTX 4090 的 24 GiB 显存上，8K 时额外使用约 44 MiB 几乎可以忽略。因此，若机器有空闲显存，把这部分空闲显存用于减少 PCIe 传输是合理的。
+
+但是固定驻留不能直接用于百万 token：
+
+```text
+单个 KV head block 在 1M token 时约为 0.477 GiB
+驻留 12 个约需要 5.72 GiB
+驻留 14 个约需要 6.68 GiB
+```
+
+到 4M token 时，驻留 12 个就需要约 22.9 GiB。因此固定 `r=12` 在超长上下文下不可行。
+
+这说明真正值得写成创新的不是“固定保留 12 个 head”，而是：
+
+> 根据上下文长度、空闲 GPU 显存和 PCIe 传输成本，动态决定驻留多少 KV head，使系统始终不超过显存预算，并尽可能减少传输。
+
+**当前成绩如何定位**
+
+可以写：
+
+> 在 0.060 GiB GPU KV 预算下，Resident 策略相较本机 HeadInfer 源码基线减少 10.70% 双向传输量，并保持序列级正确性。
+
+不能写：
+
+> Resident 比 HeadInfer 更省显存。
+
+也不能写：
+
+> Resident 比 HeadInfer 快 10%。
+
+**下一步**
+
+先完成同上下文的公平基线，运行 HeadInfer 9216：
+
+```text
+--model-path /model/ModelScope/Qwen/Qwen2.5-7B-Instruct --method headinfer --sequence-length 9216 --decode-tokens 32 --warmup-repeats 2 --repeats 5 --seed 2026 --results-dir /root/headinfer_ref/results/qwen7b_9216/headinfer_sync
+```
+
+保留：
+
+```text
+CUDA_LAUNCH_BLOCKING=1
+```
+
+这个实验将回答：
+
+```text
+在相同 9216 上下文下，
+我们用多少额外 GPU KV，
+换来了多少传输量下降。
+```
+
+完成该基线后，不再继续盲目增加固定 `r`，而是实现显存预算控制器：
+
+```text
+输入：上下文长度、GPU KV 显存上限
+输出：允许驻留的 KV head 数量
+约束：GPU KV 不超过预算
+目标：最小化 H2D + D2H 传输量
+```
+
+只有动态控制器在多个上下文长度下形成更好的 Pareto 曲线，当前工作才会从“固定参数实验”上升为可信的论文创新。
