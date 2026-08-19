@@ -1,0 +1,26 @@
+重新核对四个文件后，结果一致且有效，两组都是 20 次正式测量。
+指标	r=0	r=12	变化
+正确性	PASS	PASS	均与 Standard 一致
+延迟均值	107.035 ms/token	101.405 ms/token	降低 5.26%
+延迟标准差	5.107 ms	4.159 ms	波动略有下降
+总传输量	31.0503 GiB	27.7270 GiB	降低 10.70%
+GPU KV	0.00882 GiB	0.05732 GiB	增加 49.67 MiB
+
+
+原始 20 次测量分别来自 async_resident_v3_9216_raw.csv 和 async_resident_v3_9216_raw.csv。汇总状态见 [r=0 report](D:/project_forpython_start20250929_selectall/headinfer_ref/results/qwen7b_9216/resident_r00_async_performance_v3_formal20/async_resident_v3_9216_report.json) 和 [r=12 report](D:/project_forpython_start20250929_selectall/headinfer_ref/results/qwen7b_9216/resident_r12_async_performance_v3_formal20/async_resident_v3_9216_report.json)。
+统计结论
+平均延迟差是：
+107.0353 - 101.4052 = 5.6301 ms/token
+Welch 近似 95% 置信区间为：
+[2.64, 8.62] ms/token
+区间不包含零，因此在这 20 次测量中，r=12 的延迟降低已经超过随机波动，可以称为“具有统计区分度的约 5.26% 延迟改善”。
+可以得出的正式结论
+在 Qwen2.5-7B、9216-token 上下文和 RTX 4090 上，StageKV 的 r=12 驻留策略保持与 Standard 完全相同的生成结果，以额外约 49.67 MiB GPU KV 为代价，相比同代码异步 r=0 消融组减少 10.70% 双向传输量，并将端到端解码延迟降低 5.26%。
+
+这已经达到你设定的“传输降低至少 10%”硬指标，但没有达到“延迟降低至少 10%”。
+还有一个科研风险：r=0 和 r=12 是先后运行的，仍可能受温度、频率或主机负载顺序影响。论文正式采用前，下一步应该执行交错顺序实验：
+r=0 → r=12 → r=12 → r=0
+重复多轮，以排除运行顺序造成的偏差。
+
+
+16:24
